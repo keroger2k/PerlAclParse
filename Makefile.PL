@@ -2,7 +2,7 @@ use strict;
 use ExtUtils::MakeMaker;
 
 WriteMakefile(
-  'NAME'=>'CLIE',
+  'NAME'=>'Parse-Acl',
   'VERSION_FROM' => 'bin/main.pl',
   'PREREQ_PM' => {
   },

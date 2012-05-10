@@ -6,11 +6,23 @@ BEGIN { use_ok('ConfigParse::ParseIOS'); }
 
 can_ok('ConfigParse::ParseIOS', 'new');
 
+sub  arrange {
+  my @file_array = ();
+  my $path = 'tmp/acl-1.txt';
+  open (LIST, $path) || die "$path could not be opened: $!\nPlease check the file.\n";
+  while(my $line = <LIST>){
+    $line =~ s/\r\n$//g; #strip CRLF
+    push @file_array, $line;
+  }
+  close(LIST);
+  return ConfigParse::ParseIOS->new(file => \@file_array);
+}
+
+
 subtest 'test parse_acls' => sub {
   plan tests => 2;
-  my $p = ConfigParse::ParseIOS->new;
-  my @file = $p->open_file('tmp/acl-1.txt');
-  my %result = $p->parse_acls(@file);
+  my $p = arrange();
+  my %result = $p->parse_acls();
   my @b1_acl = @{$result{'NMCI_B1_VPN_OUT_v1'}};
   is(scalar keys %result, 9, 'should get a hash of 9 acls');
   is_deeply(\@b1_acl, [
@@ -23,9 +35,8 @@ subtest 'test parse_acls' => sub {
 
 subtest 'test get_version for acl' => sub {
   plan tests => 1;
-  my $p = ConfigParse::ParseIOS->new;
-  my @file = $p->open_file('tmp/acl-1.txt');
-  my %acls = $p->parse_acls(@file);
+  my $p = arrange();
+  my %acls = $p->parse_acls();
   my @result = $p->get_version(\%acls, 'b1acl-in-');
   is_deeply(\@result, [
     '1132',
@@ -34,9 +45,8 @@ subtest 'test get_version for acl' => sub {
 
 subtest 'test correctly get the latest version of acl' => sub {
   plan tests => 1;
-  my $p = ConfigParse::ParseIOS->new;
-  my @file = $p->open_file('tmp/acl-1.txt');
-  my %acls = $p->parse_acls(@file);
+  my $p = arrange();
+  my %acls = $p->parse_acls();
   my @result = $p->get_version(\%acls, 'b1acl-in-');
   my @latest_acl = @{$acls{"b1acl-in-$result[0]"}};
   is(scalar @latest_acl, 7887, 'something')

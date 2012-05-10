@@ -4,32 +4,13 @@ use strict;
 use warnings;
 
 sub new {
-  my ($class) = @_;
-  my $self = bless {}, $class;
+  my ($class) = shift;
+  my $self = {
+  	file => [],
+  	@_
+  };
+  bless $self, $class;
   return $self;
-}
-
-###########################################################################################
-# Description: Simply open a file or die.
-#
-# Parameters:
-# 	$path -> string -> path to the file on disk
-#
-# Returns: 
-#	@file_array -> array of strings -> contents of the file put into 
-# 		array.
-#
-###########################################################################################
-sub open_file {
-	my ($self, $path) = @_;
-	my @file_array = ();
-	open (LIST, $path) || die "$path could not be opened: $!\nPlease check the file.\n";
-	while(my $line = <LIST>){
-		$line =~ s/\r\n$//g; #strip CRLF
-		push @file_array, $line;
-	}
-	close(LIST);
-	return @file_array;
 }
 
 ###########################################################################################
@@ -45,18 +26,40 @@ sub open_file {
 #
 ###########################################################################################
 sub parse_acls {
-	my ($self, @file_array) = @_;
-	my @acl_list = ();
+	my ($self) = @_;
 	my %acl_hash = ();
-	for my $i (0 .. $#file_array) { 
-		if($file_array[$i] =~ /^ip access-list extended (\S+)/){
+	for my $i (0 .. $#{$self->{file}}) { 
+		if(${$self->{file}}[$i] =~ /^ip access-list extended (\S+)/){
 			my @t = ();
-			push @t, $file_array[$i++];
-			while($file_array[$i] =~ /^ /) {
-				push @t, $file_array[$i++];
+			push @t, ${$self->{file}}[$i++];
+			while(${$self->{file}}[$i] =~ /^ /) {
+				push @t, ${$self->{file}}[$i++];
 			}
 			@{$acl_hash{$1}} = @t;
 			$i--;
+		}
+	}
+	return %acl_hash;
+}
+
+sub parse_acls1 {
+	my ($self) = @_;
+	my %acl_hash = ();
+	my $found = 0;
+	my $flag = "";
+	my @t = ();
+	foreach my $item (@{$self->{file}}) {
+		if( $item =~ /^ip access-list extended (\S+)/i){
+			
+			if($flag ne $1){
+				$flag = $1;
+				$found = 1;
+				@t = ();
+				$acl_hash{$flag} = \@t;
+			} 
+		} 
+		if($found){
+			push @t, $item;
 		}
 	}
 	return %acl_hash;

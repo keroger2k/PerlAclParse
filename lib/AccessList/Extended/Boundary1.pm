@@ -48,7 +48,8 @@ sub get_acl_section {
 #
 ###########################################################################################
 sub replace_section {
-
+	my ($self, $section) = @_;
+	return @{$self->{rules}}
 }
 
 1;

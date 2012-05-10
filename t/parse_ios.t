@@ -18,7 +18,6 @@ sub  arrange {
   return ConfigParse::ParseIOS->new(file => \@file_array);
 }
 
-
 subtest 'test parse_acls' => sub {
   plan tests => 2;
   my $p = arrange();

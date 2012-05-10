@@ -48,8 +48,30 @@ sub get_acl_section {
 #
 ###########################################################################################
 sub replace_section {
-	my ($self, $section) = @_;
-	return @{$self->{rules}}
+	my ($self, $section, @new_rules) = @_;
+	my @new_acl = ();
+	my $found = 0;
+
+	if(scalar @new_rules == 0) { return; }
+
+	foreach my $item (@{$self->{rules}}) {
+		if( $item =~ /^ remark section (\d+)/i){
+			if($section == $1){
+				$found = 1;
+				#if we don't send remark then this needs to be there.
+				#push @new_acl, $item;
+				foreach my $rule (@new_rules) {
+					push @new_acl, $rule;
+				}
+			} elsif ($found){
+				$found = 0;
+			}
+		} 
+		if(!$found){
+			push @new_acl, $item;
+		}
+	}
+	@{$self->{rules}} = @new_acl;
 }
 
 1;

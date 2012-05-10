@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 9;
+use Test::More tests => 10;
 use Test::Harness;
 
 BEGIN { use_ok('AccessList::Extended::Boundary1'); }
@@ -74,9 +74,27 @@ subtest 'testing replace_section with an empty array of rules' => sub {
   plan tests => 2;
   
   my $p = arrange();
-  my @currentAcl = @{$p->{rules}};
-  my @updatedAcl = $p->replace_section(1);
+  my @current_section = $p->get_acl_section(1);
+  $p->replace_section(1, ());
+  my @updated_section = $p->get_acl_section(1);
   
   can_ok('AccessList::Extended::Boundary1', 'replace_section');
-  is_deeply(\@updatedAcl, \@currentAcl, 'should return an unchanged acl');
+  is_deeply(\@updated_section, \@current_section, 'should return an unchanged acl');
 };
+
+subtest 'testing replace_section with a new set of rules' => sub {
+  plan tests => 3;
+  
+  my $p = arrange();
+  my @new_rules = (
+    ' remark Section 1 -- Routing Protocol Permits',
+    ' deny ip any any'); 
+  $p->replace_section(1, @new_rules);
+  my @new_section = $p->get_acl_section(1);
+  
+  can_ok('AccessList::Extended::Boundary1', 'replace_section');
+  is_deeply(\@new_section, \@new_rules, 'section should have been replaced with new rules');
+  is($p->get_line_count(), 7855, 'should return line count for acl');
+};
+
+

@@ -26,43 +26,32 @@ sub new {
 #
 ###########################################################################################
 sub parse_acls {
-	my ($self) = @_;
-	my %acl_hash = ();
-	for my $i (0 .. $#{$self->{file}}) { 
-		if(${$self->{file}}[$i] =~ /^ip access-list extended (\S+)/){
-			my @t = ();
-			push @t, ${$self->{file}}[$i++];
-			while(${$self->{file}}[$i] =~ /^ /) {
-				push @t, ${$self->{file}}[$i++];
-			}
-			@{$acl_hash{$1}} = @t;
-			$i--;
-		}
-	}
-	return %acl_hash;
-}
+  my $self = shift;
+  my %acl_hash = ();
+  my @acl_entries = ();
+  my $in_acl = 0;
+  my $acl_name = "";
 
-sub parse_acls1 {
-	my ($self) = @_;
-	my %acl_hash = ();
-	my $found = 0;
-	my $flag = "";
-	my @t = ();
-	foreach my $item (@{$self->{file}}) {
-		if( $item =~ /^ip access-list extended (\S+)/i){
-			
-			if($flag ne $1){
-				$flag = $1;
-				$found = 1;
-				@t = ();
-				$acl_hash{$flag} = \@t;
-			} 
-		} 
-		if($found){
-			push @t, $item;
-		}
-	}
-	return %acl_hash;
+  foreach my $i (@{$self->{file}}) {
+    if ($i =~ /^ip access-list extended (\S+)/) {
+      if ($in_acl) {
+        @{$acl_hash{$acl_name}} = @acl_entries;
+        @acl_entries = ();
+      }
+      $in_acl = 1;
+      $acl_name = $1;
+      push @acl_entries, $i;
+    } elsif ($i =~ /^!/) {
+      if ($in_acl) {
+        @{$acl_hash{$acl_name}} = @acl_entries;
+        $in_acl = 0;  
+      }
+    } elsif ($i =~ /^end/) {
+      return %acl_hash;
+    } elsif ($in_acl) {
+      push @acl_entries, $i;
+    }
+  }
 }
 
 ###########################################################################################
@@ -87,6 +76,5 @@ sub get_version {
   }
   return @arr;
 }
-
 
 1;

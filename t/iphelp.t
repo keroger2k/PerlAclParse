@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 9;
+use Test::More tests => 13;
 
 BEGIN { use_ok('IPAddressv4::IPHelp'); }
 
@@ -28,6 +28,13 @@ subtest 'testing get_ip_network' => sub {
   is($p->get_ip_network('10.1.1.32', '255.255.254.0'), '10.1.0.0', 'should return network address given and string ip address and string netask');
 };
 
+subtest 'testing get_int_ip_network_from_string' => sub {
+  plan tests => 2;
+  my $p = IPAddressv4::IPHelp->new;
+  can_ok('IPAddressv4::IPHelp', 'get_int_ip_network_from_string');
+  is($p->get_int_ip_network_from_string('10.1.1.32', '255.255.254.0'), 167837696, 'should return network address given and string ip address and string netask');
+};
+
 subtest 'testing get_broadcast_address' => sub {
   plan tests => 2;
   my $p = IPAddressv4::IPHelp->new;
@@ -35,6 +42,15 @@ subtest 'testing get_broadcast_address' => sub {
   my $net = $p->convert_ip_to_integer('10.1.1.33');
   my $mask = $p->convert_ip_to_integer('255.255.254.0');
   is($p->get_broadcast_address($net,$mask), 167838207, 'should return broacast address as integer given an integer ip address and integer netmask');
+};
+
+subtest 'testing get_broadcast_int_address_from_string' => sub {
+  plan tests => 2;
+  my $p = IPAddressv4::IPHelp->new;
+  can_ok('IPAddressv4::IPHelp', 'get_broadcast_int_address_from_string');
+  my $net = '10.1.1.33';
+  my $mask = '255.255.254.0';
+  is($p->get_broadcast_int_address_from_string($net,$mask), 167838207, 'should return broacast address as integer given an integer ip address and integer netmask');
 };
 
 subtest 'testing convert_cidr_to_netmask' => sub {
@@ -62,16 +78,34 @@ subtest 'testing sort_ip_addresses' => sub {
     'given and unsort list of ip address it should return sorted numerically');
 };
 
-#subtest 'testing check_for_overlap' => sub {
-#  plan tests => 2;
-#  my $p = IPAddressv4::IPHelp->new;
-#  my @sent = ('10.0.0.0 255.255.255.224', '10.0.0.32 255.255.255.224', 
-#    '10.0.0.64 255.255.255.224', '10.0.0.96 255.255.255.224');
-#  my @test = $p->check_for_overlap(@sent);
-#  my @expected = ('10.0.0.64 255.255.255.224');
-#  can_ok('IPAddressv4::IPHelp', 'check_for_overlap');
-#  is_deeply(\@test, \@expected, 
-#    'given a list of ip addresses with no overlap an empty array will be returned');
-#};
+subtest 'testing check_for_overlap' => sub {
+ plan tests => 2;
+ my $p = IPAddressv4::IPHelp->new;
+ can_ok('IPAddressv4::IPHelp', 'check_for_overlap');
+
+ my @sent = ('10.0.0.0 255.255.255.224', '10.0.0.32 255.255.255.224', 
+   '10.0.0.64 255.255.255.224', '10.0.0.96 255.255.255.224');
+ my $result = $p->check_for_overlap(@sent);
+ my $expected = {};
+
+ is_deeply(\$result, \$expected, 
+   'given a list of ip addresses with no overlap an empty array will be returned');
+};
+
+subtest 'testing check_for_overlap' => sub {
+ plan tests => 2;
+ my $p = IPAddressv4::IPHelp->new;
+ can_ok('IPAddressv4::IPHelp', 'check_for_overlap');
+
+ my @sent = ('10.0.0.0 255.255.255.0', '10.0.0.32 255.255.255.224', 
+   '10.0.0.64 255.255.255.224', '10.0.1.96 255.255.255.224');
+
+ my $result = $p->check_for_overlap(@sent);
+ my %expected = ('10.0.0.0 255.255.255.0' => 
+            ['10.0.0.32 255.255.255.224','10.0.0.64 255.255.255.224']);
+ 
+ is_deeply(\%$result, \%expected, 
+   'given a list of ip addresses with overlap an array will be returned with overlap');
+};
 
 

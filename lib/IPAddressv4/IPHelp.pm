@@ -68,11 +68,33 @@ sub get_ip_network {
 }
 
 ###########################################################################################
+# Description: Given an ip address and netmask, determines the network address
+#
+# Parameters:
+#   @ipv4 -> string -> dotted decimal version of ip address; gets split into an array 
+#     on shift
+#   @m    -> string -> dotted decimal version of netmask; gets split into an array
+#     on shift
+#   
+# Returns: 
+#   string -> dotted decimal version of network addreess for ip address
+#
+###########################################################################################
+sub get_int_ip_network_from_string {
+  my $self = shift(@_);
+  my @IPv4 = split '\.', shift(@_);
+  my @M = split '\.', shift(@_);
+  my $Mask0 = $M[0] - 0; my $Mask1 = $M[1] - 0; my $Mask2 = $M[2] - 0; my $Mask3 = $M[3] - 0;
+  my $result = sprintf "%d\.%d\.%d\.%d", ($IPv4[0] & $Mask0), ($IPv4[1] & $Mask1), ($IPv4[2] & $Mask2), ($IPv4[3] & $Mask3);
+  return $self->convert_ip_to_integer($result);
+}
+
+###########################################################################################
 # Description: Given an ip address and netmask, determines the broadcast address.
 #
 # Parameters:
-#   string -> ip address/network address in dotted decimal notation
-#   string -> netmask in dotted decimal notation
+#   integer -> ip address
+#   integer -> netmask 
 #
 # Returns: 
 #   integer -> integer version of broadcast address.
@@ -81,6 +103,24 @@ sub get_ip_network {
 sub get_broadcast_address {
   my $self = shift(@_);
   return (shift(@_) | (0xffffffff ^ shift(@_)));
+}
+
+###########################################################################################
+# Description: Given an ip address and netmask, determines the broadcast address.
+#
+# Parameters:
+#   string -> ip address
+#   string -> netmask 
+#
+# Returns: 
+#   integer -> integer version of broadcast address.
+#
+###########################################################################################
+sub get_broadcast_int_address_from_string {
+  my $self = shift(@_);
+  my $net = $self->convert_ip_to_integer(shift(@_));
+  my $mask = $self->convert_ip_to_integer(shift(@_));
+  return ($net | (0xffffffff ^ $mask));
 }
 
 ###########################################################################################
@@ -180,9 +220,41 @@ sub sort_ip_addresses{
 #
 ###########################################################################################
 sub check_for_overlap {
-# TODO: complete
   my ($self, @addresses) = @_;
-  return @addresses;
+  my $overlaps = {};
+
+  foreach my $line (@addresses) {
+    my @empty = ();
+    my @tmp = split / /, $line;
+    
+    my $line_network = $self->get_int_ip_network_from_string($tmp[0], $tmp[1]);
+    my $line_broadcast = $self->get_broadcast_int_address_from_string($tmp[0], $tmp[1]);
+
+    my $found_self = 0;
+
+    foreach my $inside_line (@addresses){
+      
+      if(!$found_self && ($line eq $inside_line)) {
+        $found_self = 1;
+        next;
+      }
+
+      my @inside_tmp = split / /, $inside_line;
+    
+      my $inside_line_network = $self->get_int_ip_network_from_string($inside_tmp[0], $inside_tmp[1]);
+      my $inside_line_broadcast = $self->get_broadcast_int_address_from_string($inside_tmp[0], $inside_tmp[1]);
+
+      if($line_network <= $inside_line_network && $line_broadcast >= $inside_line_broadcast) {
+        push @empty, $inside_line;
+      }
+    }
+    
+    if(scalar @empty > 0){
+      $overlaps->{$line} = \@empty;
+    }
+
+  }
+  return $overlaps;
 }
 
 1;

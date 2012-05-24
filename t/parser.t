@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Scalar::Util 'blessed';
-use Test::More tests => 7;
+use Test::More tests => 8;
 use AccessList::Parser;
 
 my $parser = AccessList::Parser->new();
@@ -50,13 +50,13 @@ is_deeply($actual, $expected , 'Access list 2');
 # Access list 3
 #
 
-$string = q{deny   ip 138.145.211.0 0.0.0.255 any log-input};
+$string = q{deny   ip 1.2.3.4 0.0.0.255 any log-input};
 $tree = $parser->parse($string);
 $actual = visit($tree);
 $expected = {
 	'acl_action'    => 'deny',
 	'acl_protocol'  => 'ip',
-	'acl_src_ip'    => '138.145.211.0 0.0.0.255',
+	'acl_src_ip'    => '1.2.3.4 0.0.0.255',
 	'acl_dst_ip'    => 'any'
 };
 
@@ -66,14 +66,14 @@ is_deeply($actual, $expected , 'Access list 3');
 # Access list 4
 #
 
-$string = q{permit tcp host 138.163.128.41 host 205.85.41.136 eq 416};
+$string = q{permit tcp host 1.2.3.4 host 5.6.7.8 eq 416};
 $tree = $parser->parse($string);
 $actual = visit($tree);
 $expected = {
 	'acl_action'    => 'permit',
 	'acl_protocol'  => 'tcp',
-	'acl_src_ip'    => '138.163.128.41',
-	'acl_dst_ip'    => '205.85.41.136',
+	'acl_src_ip'    => '1.2.3.4',
+	'acl_dst_ip'    => '5.6.7.8',
 	'acl_dst_port' 	=> '416'
 };
 
@@ -83,14 +83,14 @@ is_deeply($actual, $expected , 'Access list 4');
 # Access list 5
 #
 
-$string = q{permit tcp host 214.40.4.237 host 214.40.4.238 eq bgp};
+$string = q{permit tcp host 1.2.3.4 host 5.6.7.8 eq bgp};
 $tree = $parser->parse($string);
 $actual = visit($tree);
 $expected = {
 	'acl_action'    => 'permit',
 	'acl_protocol'  => 'tcp',
-	'acl_src_ip'    => '214.40.4.237',
-	'acl_dst_ip'    => '214.40.4.238',
+	'acl_src_ip'    => '1.2.3.4',
+	'acl_dst_ip'    => '5.6.7.8',
 	'acl_dst_port' 	=> 'bgp'
 };
 
@@ -108,6 +108,23 @@ $expected = {
 };
 
 is_deeply($actual, $expected , 'Access list 6');
+
+#
+# Access list 7
+#
+
+$string = q{permit tcp host 1.2.3.4 eq bgp host 5.6.7.8};
+$tree = $parser->parse($string);
+$actual = visit($tree);
+$expected = {
+	'acl_action'    => 'permit',
+	'acl_protocol'  => 'tcp',
+	'acl_src_ip'    => '1.2.3.4',
+	'acl_dst_ip'    => '5.6.7.8',
+	'acl_src_port' 	=> 'bgp'
+};
+
+is_deeply($actual, $expected , 'Access list 7');
 
 
 #

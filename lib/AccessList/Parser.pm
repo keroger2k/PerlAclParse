@@ -4,6 +4,7 @@ use 5.008008;
 use strict;
 use warnings;
 use Carp;
+use Scalar::Util 'blessed';
 use Parse::RecDescent;
 
 our $VERSION = '0.05';
@@ -26,7 +27,70 @@ sub parse {
 	defined ($string) or confess "blank line received";
 	my $tree = $self->{PARSER}->startrule($string);
 	defined($tree) or confess "unrecognized line\n";
-	return $tree;
+	return visit($tree);
+}
+
+#
+# Finished tests
+#
+
+sub visit {
+	my ($node) = @_;
+
+	my $Rule_To_Key_Map = {
+		"acl_action"              => 1,
+		"acl_protocol"            => 1,
+		"acl_src_ip"              => 1,
+		"acl_src_port"            => 1,
+		"acl_dst_ip"              => 1,
+		"acl_dst_port"            => 1,
+		"acl_remark"              => 1
+	};
+
+	my $parent_key;
+	my $result;
+
+	# set s of explored vertices
+	my %seen;
+
+	#stack is all neighbors of s
+	my @stack;
+	push @stack, [ $node, $parent_key ];
+
+	my $key;
+
+	while (@stack) {
+
+		my $rec = pop @stack;
+
+		$node       = $rec->[0];
+		$parent_key = $rec->[1];    #undef for root
+
+		next if ( $seen{$node}++ );
+
+		my $rule_id = ref($node);
+
+		if ( exists( $Rule_To_Key_Map->{$rule_id} ) ) {
+			$parent_key = $rule_id;
+		}
+
+		foreach my $key ( keys %$node ) {
+			next if ( $key eq "EOL" );
+			my $next = $node->{$key};
+			if ( blessed($next) ) {
+				if ( exists( $next->{__VALUE__} ) ) {
+			   		#print ref($node), " ", ref($next), " ", $next->{__VALUE__},"\n";
+					my $rule  = ref($node);
+					my $token = $next->{__VALUE__};
+					$result->{$parent_key} = $token;
+					#print $rule, " ", $result->{$rule}, "\n";
+				}
+				push @stack, [ $next, $parent_key ];
+				#push @stack, $next;
+			}
+		}
+	}
+	return $result;
 }
 
 sub _grammar {

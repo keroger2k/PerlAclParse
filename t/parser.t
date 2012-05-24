@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use Scalar::Util 'blessed';
-use Test::More tests => 6;
+use Test::More tests => 7;
 use AccessList::Parser;
 
 my $parser = AccessList::Parser->new();
@@ -96,8 +96,18 @@ $expected = {
 
 is_deeply($actual, $expected , 'Access list 5');
 
+#
+# Access list 6
+#
 
+$string = q{remark deny Navy internal spoofing};
+$tree = $parser->parse($string);
+$actual = visit($tree);
+$expected = {
+	'acl_remark'    => 'deny Navy internal spoofing'
+};
 
+is_deeply($actual, $expected , 'Access list 6');
 
 
 #
@@ -161,22 +171,4 @@ sub visit {
 		}
 	}
 	return $result;
-}
-
-sub equals {
-	my ( $hash1, $hash2 ) = @_;
-
-	if ( scalar( keys %$hash1 ) != scalar( keys %$hash2 ) ) {
-		return undef;
-	}
-
-	foreach my $key ( keys %$hash2 ) {
-		if ( !defined( $hash1->{$key} ) ) {
-			return undef;
-		}
-		if ( $hash1->{$key} ne $hash2->{$key} ) {
-			return undef;
-		}
-	}
-	return 1;
 }

@@ -37,6 +37,7 @@ sub _grammar {
 
 startrule :
 		access_list EOL
+	|	acl_remark EOL
 	|	<error>
 
 #

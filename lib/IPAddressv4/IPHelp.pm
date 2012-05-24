@@ -206,17 +206,13 @@ sub sort_ip_addresses{
 
 ###########################################################################################
 # Description: Given a list of ip address will determine addresses that overlap
-#   Partial Overlap -> an address overlaps a portion of another address, but not
-#           not entirely encompassing range
-#   Full Overlap    -> an address full encompasses another address
 #
 # Parameters:
 #   array -> array of addresses in dotted decimal format to check for overlap
 #
 # Returns: 
-#   array -> something.
-#
-# TODO: complete
+#   hash -> key -> network that has overlaps
+#        -> value -> array of networks that are overlapped
 #
 ###########################################################################################
 sub check_for_overlap {

@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 13;
+use Test::More tests => 14;
 
 BEGIN { use_ok('IPAddressv4::IPHelp'); }
 
@@ -103,6 +103,35 @@ subtest 'testing check_for_overlap' => sub {
  my $result = $p->check_for_overlap(@sent);
  my %expected = ('10.0.0.0 255.255.255.0' => 
             ['10.0.0.32 255.255.255.224','10.0.0.64 255.255.255.224']);
+ 
+ is_deeply(\%$result, \%expected, 
+   'given a list of ip addresses with overlap an array will be returned with overlap');
+};
+
+
+subtest 'testing check_for_overlap' => sub {
+ plan tests => 2;
+ my $p = IPAddressv4::IPHelp->new;
+ can_ok('IPAddressv4::IPHelp', 'check_for_overlap');
+
+ my @sent = (
+    '10.0.0.0 255.255.255.224', 
+    '10.0.0.32 255.255.255.224', 
+    '10.0.0.64 255.255.255.224', 
+    '10.0.0.0 255.255.254.0',
+    '10.0.0.0 255.255.0.0',
+    '10.0.3.0 255.255.255.0'
+  );
+
+ my $result = $p->check_for_overlap(@sent);
+ my %expected = (
+  '10.0.0.0 255.255.0.0' =>
+            ['10.0.0.0 255.255.255.224', '10.0.0.32 255.255.255.224',
+             '10.0.0.64 255.255.255.224', '10.0.0.0 255.255.254.0',
+             '10.0.3.0 255.255.255.0'],
+  '10.0.0.0 255.255.254.0' =>
+            ['10.0.0.0 255.255.255.224', '10.0.0.32 255.255.255.224',
+             '10.0.0.64 255.255.255.224']);
  
  is_deeply(\%$result, \%expected, 
    'given a list of ip addresses with overlap an array will be returned with overlap');

@@ -74,4 +74,16 @@ sub replace_section {
 	@{$self->{rules}} = @new_acl;
 }
 
+sub read_acl {
+	my ($self, @acl) = @_;
+	my $parser = AccessList::Parser->new();
+	my @result = ();
+
+	foreach my $line (@acl) {
+		my $parsed_line = $parser->parse($line);
+		push @result, $parsed_line;
+	}
+	return @result;	
+}
+
 1;

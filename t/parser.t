@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 8;
+use Test::More tests => 9;
 use AccessList::Parser;
 
 my $parser = AccessList::Parser->new();
@@ -117,5 +117,21 @@ $expected = {
 };
 
 is_deeply($actual, $expected , 'Access list 7');
+
+#
+# Access list 8
+#
+
+$string = q{deny   ip 24.80.0.0 0.7.255.255 any log-input};
+$actual = $parser->parse($string);
+$expected = {
+	'acl_action'    => 'deny',
+	'acl_protocol'  => 'ip',
+	'acl_src_ip'    => '24.80.0.0 0.7.255.255',
+	'acl_dst_ip'    => 'any'
+};
+
+is_deeply($actual, $expected , 'Access list 8');
+
 
 

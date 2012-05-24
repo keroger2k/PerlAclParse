@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 10;
+use Test::More tests => 11;
 use Test::Harness;
 
 BEGIN { use_ok('AccessList::Extended::Boundary1'); }
@@ -97,4 +97,14 @@ subtest 'testing replace_section with a new set of rules' => sub {
   is($p->get_line_count(), 7855, 'should return line count for acl');
 };
 
+subtest 'testing read_acl section' => sub {
+  plan tests => 2;
+  
+  my $p = arrange();
+  
+  can_ok('AccessList::Extended::Boundary1', 'read_acl');
+  my @section = $p->get_acl_section(4);
+  my @result = $p->read_acl(@section);
+  is(scalar $p->get_acl_section(9), 0, 'should return and empty array');
+};
 

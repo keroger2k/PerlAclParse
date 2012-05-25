@@ -253,4 +253,10 @@ sub check_for_overlap {
   return $overlaps;
 }
 
+sub inverse_to_subnetmask {
+  my $self = shift(@_);
+  my @b = split '\.', shift(@_);
+  return (sprintf "%d\.%d\.%d\.%d", (255-$b[0]), (255-$b[1]), (255-$b[2]), (255-$b[3]));
+}
+
 1;

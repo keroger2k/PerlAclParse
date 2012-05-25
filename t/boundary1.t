@@ -105,6 +105,6 @@ subtest 'testing read_acl section' => sub {
   can_ok('AccessList::Extended::Boundary1', 'read_acl');
   my @section = $p->get_acl_section(4);
   my @result = $p->read_acl(@section);
-  is(scalar $p->get_acl_section(9), 0, 'should return and empty array');
+  is(scalar @result, 594, 'should return an array of hashes from section 4');
 };
 

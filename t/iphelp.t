@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 14;
+use Test::More tests => 15;
 
 BEGIN { use_ok('IPAddressv4::IPHelp'); }
 
@@ -58,6 +58,13 @@ subtest 'testing convert_cidr_to_netmask' => sub {
   my $p = IPAddressv4::IPHelp->new;
   can_ok('IPAddressv4::IPHelp', 'convert_cidr_to_netmask');
   is($p->convert_cidr_to_netmask(23), '255.255.254.0', 'should convert a integer netmask in cidr notation to string netmask in long notation');
+};
+
+subtest 'testing inverse_to_subnetmask' => sub {
+  plan tests => 2;
+  my $p = IPAddressv4::IPHelp->new;
+  can_ok('IPAddressv4::IPHelp', 'inverse_to_subnetmask');
+  is($p->inverse_to_subnetmask('0.0.31.255'), '255.255.224.0', 'should convert inverse mask to subnetmask');
 };
 
 subtest 'testing ip_inside_range' => sub {
@@ -137,4 +144,7 @@ subtest 'testing check_for_overlap' => sub {
    'given a list of ip addresses with overlap an array will be returned with overlap');
 };
 
+
+
+ 
 

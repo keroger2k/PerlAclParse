@@ -253,6 +253,16 @@ sub check_for_overlap {
   return $overlaps;
 }
 
+###########################################################################################
+# Description: Converts an inverse mask into a subnet mask.
+#
+# Parameters:
+#   string -> dotted decimal version of an inverse mask
+#
+# Returns: 
+#   string -> dotted decimal version of a subnet mask
+#
+###########################################################################################
 sub inverse_to_subnetmask {
   my $self = shift(@_);
   my @b = split '\.', shift(@_);

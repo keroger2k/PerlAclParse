@@ -26,53 +26,43 @@ use base qw(AccessList::Generic);
 #
 ###########################################################################################
 sub check_rules_overlap {
-  my ($self, @addresses) = @_;
-  my $overlaps = {};
+  	my ($self, @addresses) = @_;
+  	my $overlaps = {};
 
-  foreach my $line (@addresses) {
-    my @empty = ();
-    my $src_mask;
-    my $dst_mask;
-    my $line_src_network;
-    my $line_src_broadcast;
-
-    if($line->{'acl_src_ip'} eq 'any') {
-      $line_src_network = $self->get_int_ip_network_from_string('0.0.0.0', '0.0.0.0');  
-      $line_src_broadcast = $self->get_broadcast_int_address_from_string('0.0.0.0', '0.0.0.0');
-    } elsif (scalar(split / /, $line->{'acl_src_ip'}) == 1) {
-      $line_src_network = $self->get_int_ip_network_from_string($line->{'acl_src_ip'}, '255.255.255.255');  
-      $line_src_broadcast = $self->get_broadcast_int_address_from_string($line->{'acl_src_ip'}, '255.255.255.255');
-    } else {
-      my ($src_address, $src_inverse) = split / /, $line->{'acl_src_ip'};
-      $line_src_network = $self->get_int_ip_network_from_string($src_address, flip_the_bits($src_inverse));  
-      $line_src_broadcast = $self->get_broadcast_int_address_from_string($src_address, flip_the_bits($src_inverse));
-    }
-
-    #my $found_self = 0;
-
-    # foreach my $inside_line (@addresses){
-      
-    #   if(!$found_self && ($line eq $inside_line)) {
-    #     $found_self = 1;
-    #     next;
-    #   }
-
-    #   my @inside_tmp = split / /, $inside_line;
+  	foreach my $line (@addresses) {
+    	my @empty = ();
     
-    #   my $inside_line_network = $self->get_int_ip_network_from_string($inside_tmp[0], $inside_tmp[1]);
-    #   my $inside_line_broadcast = $self->get_broadcast_int_address_from_string($inside_tmp[0], $inside_tmp[1]);
+    	my $found_self = 0;
 
-    #   if($line_network <= $inside_line_network && $line_broadcast >= $inside_line_broadcast) {
-    #     push @empty, $inside_line;
-    #   }
-    # }
-    
-    # if(scalar @empty > 0){
-    #   $overlaps->{$line} = \@empty;
-    # }
+    	foreach my $inside_line (@addresses){
 
-  }
-  return $overlaps;
+			if ( $line->{'acl_protocol'} eq $inside_line->{'acl_protocol'} &&
+     			$line->{'acl_action'} eq $inside_line->{'acl_action'}) {
+     			#since this looping same data twice, need to count out own entry
+     	   		if(!$found_self && $line->{'acl_src_ip'} eq $inside_line->{'acl_src_ip'} && 
+     	   			$line->{'acl_dst_ip'} eq $inside_line->{'acl_dst_ip'}) {
+	     	       $found_self = 1;
+	     	       next;
+	     	   	}
+
+	     	   	if($line->{'acl_src_ip'} eq $inside_line->{'acl_src_ip'}) {
+
+	     	   		#check for destination overlap
+	     	   		print "checking for destination overlaps\n";
+
+	     	   	}
+
+	     	   	if($line->{'acl_dst_ip'} eq $inside_line->{'acl_dst_ip'}) {
+
+	     	   		#check for source overlap
+	     	   		print "checking for source overlaps\n";
+
+	     	   	}
+     		}
+  		}
+  		
+	}
+	return $overlaps;
 }
 
 

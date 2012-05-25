@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use AccessList::Extended;
 use Test::More tests => 6;
 
 BEGIN { use_ok('AccessList::Extended'); }
@@ -17,8 +18,8 @@ subtest 'testing get_line_count for an empty acl' => sub {
 
 subtest 'testing check_rules_overlap' => sub {
  plan tests => 2;
- my $p = IPAddressv4::IPHelp->new;
- can_ok('IPAddressv4::IPHelp', 'check_rules_overlap');
+ my $p = AccessList::Extended->new;
+ can_ok('AccessList::Extended', 'check_rules_overlap');
 
  my @sent = (
     {
@@ -34,7 +35,7 @@ subtest 'testing check_rules_overlap' => sub {
       'acl_dst_ip'   => 'any',
     },
     {
-      'acl_action '  => 'permit',
+      'acl_action'  => 'permit',
       'acl_protocol' => 'ip',
       'acl_src_ip'   => '10.0.1.0 0.0.0.255',
       'acl_dst_ip'   => 'any',
@@ -50,7 +51,7 @@ subtest 'testing check_rules_overlap' => sub {
       'acl_protocol' => 'ip',
       'acl_src_ip'   => '10.0.2.1',
       'acl_dst_ip'   => 'any',
-    },
+    }
   );
 
  my $result = $p->check_rules_overlap(@sent);

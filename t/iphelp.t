@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 15;
+use Test::More tests => 17;
 
 BEGIN { use_ok('IPAddressv4::IPHelp'); }
 
@@ -65,6 +65,20 @@ subtest 'testing inverse_to_subnetmask' => sub {
   my $p = IPAddressv4::IPHelp->new;
   can_ok('IPAddressv4::IPHelp', 'inverse_to_subnetmask');
   is($p->inverse_to_subnetmask('0.0.31.255'), '255.255.224.0', 'should convert inverse mask to subnetmask');
+};
+
+subtest 'testing inverse_to_subnetmask' => sub {
+  plan tests => 2;
+  my $p = IPAddressv4::IPHelp->new;
+  can_ok('IPAddressv4::IPHelp', 'inverse_to_subnetmask');
+  is($p->inverse_to_subnetmask('0.0.0.0'), '255.255.255.255', 'should convert inverse mask to subnetmask');
+};
+
+subtest 'testing inverse_to_subnetmask' => sub {
+  plan tests => 2;
+  my $p = IPAddressv4::IPHelp->new;
+  can_ok('IPAddressv4::IPHelp', 'inverse_to_subnetmask');
+  is($p->inverse_to_subnetmask('255.255.255.255'), '0.0.0.0', 'should convert inverse mask to subnetmask');
 };
 
 subtest 'testing ip_inside_range' => sub {

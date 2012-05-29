@@ -1,10 +1,13 @@
 package AccessList::Extended;
 use strict;
 use warnings;
+use IPAddressv4::IPHelp;
 use AccessList::Generic;
 use AccessList::Parser;
 
 use base qw(AccessList::Generic);
+
+my $iphelper = IPAddressv4::IPHelp->new;
 
 ###########################################################################################
 # Description: Given an array of acl rules checks for overlaps
@@ -26,41 +29,126 @@ use base qw(AccessList::Generic);
 #
 ###########################################################################################
 sub check_rules_overlap {
-  	my ($self, @addresses) = @_;
-  	my $overlaps = {};
+	my ($self, @addresses) = @_;
+	my $overlaps = {};
 
-  	foreach my $line (@addresses) {
-    	my @empty = ();
-    
-    	my $found_self = 0;
+	foreach my $line (@addresses) {
+  	my @empty = ();
+  	my $found_self = 0;
 
-    	foreach my $inside_line (@addresses){
+  	foreach my $inside_line (@addresses){
 
-			if ( $line->{'acl_protocol'} eq $inside_line->{'acl_protocol'} &&
-     			$line->{'acl_action'} eq $inside_line->{'acl_action'}) {
-     			#since this looping same data twice, need to count out own entry
-     	   		if(!$found_self && $line->{'acl_src_ip'} eq $inside_line->{'acl_src_ip'} && 
-     	   			$line->{'acl_dst_ip'} eq $inside_line->{'acl_dst_ip'}) {
-	     	       $found_self = 1;
-	     	       next;
-	     	   	}
+		if ( $line->{'acl_protocol'} eq $inside_line->{'acl_protocol'} &&
+   			$line->{'acl_action'} eq $inside_line->{'acl_action'}) {
 
-	     	   	if($line->{'acl_src_ip'} eq $inside_line->{'acl_src_ip'}) {
 
-	     	   		#check for destination overlap
-	     	   		print "checking for destination overlaps\n";
+   			#since this looping same data twice, need to count out own entry
+ 	   		if(!$found_self && $line->{'acl_src_ip'} eq $inside_line->{'acl_src_ip'} && 
+ 	   		 	$line->{'acl_dst_ip'} eq $inside_line->{'acl_dst_ip'}) {
+   	       $found_self = 1;
+   	       next;
+   	   	}
 
-	     	   	}
+   	   	if($line->{'acl_src_ip'} eq $inside_line->{'acl_src_ip'}) {
 
-	     	   	if($line->{'acl_dst_ip'} eq $inside_line->{'acl_dst_ip'}) {
+   	   		#check for destination overlap
 
-	     	   		#check for source overlap
-	     	   		print "checking for source overlaps\n";
+   	   		my @tmp = ();
+   	   		my @inside_tmp = ();
+   	   		my $inside_host_entry = 0;
 
-	     	   	}
-     		}
-  		}
-  		
+   	   		if($line->{'acl_dst_ip'} eq 'any') {
+   	   			@tmp = ('0.0.0.0', '255.255.255.255');
+   	   		} else {
+   	   			@tmp = split / /, $line->{'acl_dst_ip'};
+   	   			#check if this is just a host address
+   	   			if(scalar @tmp != 2) {
+   	   				$tmp[1] = '0.0.0.0';
+   	   				$inside_host_entry = 1;
+   	   			}
+					}
+
+   	   		if($inside_line->{'acl_dst_ip'} eq 'any') {
+   	   			@inside_tmp = ('0.0.0.0', '255.255.255.255');
+   	   		} else {
+   	   		  @inside_tmp = split / /, $inside_line->{'acl_dst_ip'};
+   	   		  #check if this is just a host address
+   	   			if(scalar @inside_tmp != 2) {
+   	   				$inside_tmp[1] = '0.0.0.0';
+   	   				$inside_host_entry = 1;
+   	   			}
+   	   		}
+
+   	   		$tmp[1] = $iphelper->inverse_to_subnetmask($tmp[1]);
+   	   		$inside_tmp[1] = $iphelper->inverse_to_subnetmask($inside_tmp[1]);
+   	   		
+   	   		my $line_network = $iphelper->get_int_ip_network_from_string($tmp[0], $tmp[1]);
+					my $line_broadcast = $iphelper->get_broadcast_int_address_from_string($tmp[0], $tmp[1]);
+		      my $inside_line_network = $iphelper->get_int_ip_network_from_string($inside_tmp[0], $inside_tmp[1]);
+		      my $inside_line_broadcast = $iphelper->get_broadcast_int_address_from_string($inside_tmp[0], $inside_tmp[1]);
+
+		      if($line_network <= $inside_line_network && $line_broadcast >= $inside_line_broadcast) {
+		      	my $val = $inside_line->{'acl_action'} . " " . $inside_line->{'acl_protocol'} . " " . 
+							$inside_line->{'acl_src_ip'} . " " . (($inside_host_entry) ? "host " : "") . $inside_line->{'acl_dst_ip'};
+						push @empty, $val;
+		      }
+
+   	   	}
+
+   	   	if($line->{'acl_dst_ip'} eq $inside_line->{'acl_dst_ip'}) {
+
+   	   		#check for source overlap
+   	   		my @tmp = ();
+   	   		my @inside_tmp = ();
+   	   		my $inside_host_entry = 0;
+
+   	   		if($line->{'acl_src_ip'} eq 'any') {
+   	   			@tmp = ('0.0.0.0', '0.0.0.0');
+   	   		} else {
+   	   			@tmp = split / /, $line->{'acl_src_ip'};
+   	   			#check if this is just a host address
+   	   			if(scalar @tmp != 2) {
+   	   				$tmp[1] = '0.0.0.0';
+   	   				$inside_host_entry = 1;
+   	   			}
+					}
+
+   	   		if($inside_line->{'acl_src_ip'} eq 'any') {
+   	   			@inside_tmp = ('0.0.0.0', '0.0.0.0');
+   	   		} else {
+   	   		  @inside_tmp = split / /, $inside_line->{'acl_src_ip'};
+   	   		  #check if this is just a host address
+   	   			if(scalar @inside_tmp != 2) {
+   	   				$inside_tmp[1] = '0.0.0.0';
+   	   				$inside_host_entry = 1;
+   	   			}
+   	   		}
+
+   	   		$tmp[1] = $iphelper->inverse_to_subnetmask($tmp[1]);
+   	   		$inside_tmp[1] = $iphelper->inverse_to_subnetmask($inside_tmp[1]);
+
+
+   	   		my $line_network = $iphelper->get_int_ip_network_from_string($tmp[0], $tmp[1]);
+					my $line_broadcast = $iphelper->get_broadcast_int_address_from_string($tmp[0], $tmp[1]);
+		      my $inside_line_network = $iphelper->get_int_ip_network_from_string($inside_tmp[0], $inside_tmp[1]);
+		      my $inside_line_broadcast = $iphelper->get_broadcast_int_address_from_string($inside_tmp[0], $inside_tmp[1]);
+
+		      if($line_network <= $inside_line_network && $line_broadcast >= $inside_line_broadcast) {
+						my $val = $inside_line->{'acl_action'} . " " . $inside_line->{'acl_protocol'} . " " . (($inside_host_entry) ? "host " : "") .
+						$inside_line->{'acl_src_ip'} . " " . $inside_line->{'acl_dst_ip'};
+			      push @empty, $val;
+		      }
+
+   	   	}
+   		}
+		}
+
+		#went through the outside loop, now look if there were any overlaps
+		if(scalar @empty > 0){
+			my $key = $line->{'acl_action'} . " " . $line->{'acl_protocol'} . " " . $line->{'acl_src_ip'} . " " . $line->{'acl_dst_ip'};
+	  	$overlaps->{$key} = \@empty;
+		}
+
 	}
 	return $overlaps;
 }

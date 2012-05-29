@@ -84,21 +84,20 @@ sub check_rules_overlap {
    	   		
    	   		my $line_network = $iphelper->get_int_ip_network_from_string($tmp[0], $tmp[1]);
 					my $line_broadcast = $iphelper->get_broadcast_int_address_from_string($tmp[0], $tmp[1]);
-		      my $inside_line_network = $iphelper->get_int_ip_network_from_string($inside_tmp[0], $inside_tmp[1]);
-		      my $inside_line_broadcast = $iphelper->get_broadcast_int_address_from_string($inside_tmp[0], $inside_tmp[1]);
+               my $inside_line_network = $iphelper->get_int_ip_network_from_string($inside_tmp[0], $inside_tmp[1]);
+               my $inside_line_broadcast = $iphelper->get_broadcast_int_address_from_string($inside_tmp[0], $inside_tmp[1]);
 
-		      if($line_network <= $inside_line_network && $line_broadcast >= $inside_line_broadcast) {
-		      	my $val = 
-		      		$inside_line->{'acl_action'} . " " . 
-		      		$inside_line->{'acl_protocol'} . " " . 
-							$inside_line->{'acl_src_ip'} . " " . 
-							((defined($inside_line->{'acl_src_port'})) ? $inside_line->{'acl_src_port'} . " " : "") . 
-							(($inside_host_entry) ? "host " : "") . 
-							$inside_line->{'acl_dst_ip'} . 
-							((defined($inside_line->{'acl_dst_port'})) ? " " . $inside_line->{'acl_dst_port'} : "");
-						push @empty, $val;
-		      }
-
+   		      if($line_network <= $inside_line_network && $line_broadcast >= $inside_line_broadcast) {
+   		      	my $val = 
+   		      		$inside_line->{'acl_action'} . " " . 
+   		      		$inside_line->{'acl_protocol'} . " " . 
+   						$inside_line->{'acl_src_ip'} . " " . 
+   						((defined($inside_line->{'acl_src_port'})) ? $inside_line->{'acl_src_port'} . " " : "") . 
+   						(($inside_host_entry) ? "host " : "") . 
+   						$inside_line->{'acl_dst_ip'} . 
+   						((defined($inside_line->{'acl_dst_port'})) ? " " . $inside_line->{'acl_dst_port'} : "");
+   					push @empty, $val;
+   		      }
    	   	}
 
    	   	if($line->{'acl_dst_ip'} eq $inside_line->{'acl_dst_ip'}) {
@@ -136,20 +135,19 @@ sub check_rules_overlap {
 
    	   		my $line_network = $iphelper->get_int_ip_network_from_string($tmp[0], $tmp[1]);
 					my $line_broadcast = $iphelper->get_broadcast_int_address_from_string($tmp[0], $tmp[1]);
-		      my $inside_line_network = $iphelper->get_int_ip_network_from_string($inside_tmp[0], $inside_tmp[1]);
-		      my $inside_line_broadcast = $iphelper->get_broadcast_int_address_from_string($inside_tmp[0], $inside_tmp[1]);
+   		      my $inside_line_network = $iphelper->get_int_ip_network_from_string($inside_tmp[0], $inside_tmp[1]);
+   		      my $inside_line_broadcast = $iphelper->get_broadcast_int_address_from_string($inside_tmp[0], $inside_tmp[1]);
 
-		      if($line_network <= $inside_line_network && $line_broadcast >= $inside_line_broadcast) {
-					my $val = $inside_line->{'acl_action'} . " " . 
-						$inside_line->{'acl_protocol'} . " " . 
-						(($inside_host_entry) ? "host " : "") .
-						$inside_line->{'acl_src_ip'} . " " . 
-						((defined($inside_line->{'acl_src_port'})) ? $inside_line->{'acl_src_port'} . " " : "") . 
-						$inside_line->{'acl_dst_ip'} .
-			         ((defined($inside_line->{'acl_dst_port'})) ? $inside_line->{'acl_dst_port'} . " " : "");
-					push @empty, $val;
-		      }
-
+   		      if($line_network <= $inside_line_network && $line_broadcast >= $inside_line_broadcast) {
+   					my $val = $inside_line->{'acl_action'} . " " . 
+   						$inside_line->{'acl_protocol'} . " " . 
+   						(($inside_host_entry) ? "host " : "") .
+   						$inside_line->{'acl_src_ip'} . " " . 
+   						((defined($inside_line->{'acl_src_port'})) ? $inside_line->{'acl_src_port'} . " " : "") . 
+   						$inside_line->{'acl_dst_ip'} .
+   			         ((defined($inside_line->{'acl_dst_port'})) ? $inside_line->{'acl_dst_port'} . " " : "");
+   					push @empty, $val;
+   		      }
    	   	}
    		}
 		}

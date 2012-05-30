@@ -5,11 +5,8 @@ use warnings;
 use Carp;
 use Scalar::Util 'blessed';
 use Parse::RecDescent;
-use IPAddressv4::IPHelp;
 
 our $VERSION = '0.05';
-
-my $iphelper = IPAddressv4::IPHelp->new;
 
 sub new {
 	my ($class) = @_;
@@ -33,9 +30,20 @@ sub parse {
 	return $item;
 }
 
-#
-# Finished tests
-#
+sub parse_array {
+	my ( $self, @arr ) = @_;
+	my @result = ();
+	my $i = 0;
+	foreach my $line (@arr) {
+		if(defined($line)) {
+			my $tree = $self->{PARSER}->startrule($line);
+			my $parsed_line = visit($tree);
+			$parsed_line->{'line_number'} = $i++;
+			push @result, $parsed_line;
+		}
+	}
+	return @result;
+}
 
 sub visit {
 	my ($node) = @_;

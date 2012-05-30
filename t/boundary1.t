@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 11;
+use Test::More tests => 14;
 use Test::Harness;
 use AccessList::Parser;
 
@@ -24,6 +24,7 @@ sub arrange {
   my %acls = $config->parse_acls();
   my @result = $config->get_version(\%acls, 'b1acl-in-');
   my @latest_acl = @{$acls{"b1acl-in-$result[0]"}};
+  shift(@latest_acl);
   return AccessList::Extended::Boundary1->new(rules => \@latest_acl);
 }
 
@@ -43,7 +44,7 @@ subtest 'testing get_line_count for an non empty acl' => sub {
   my $p = arrange();
 
   can_ok('AccessList::Extended::Boundary1', 'get_line_count');
-  is($p->get_line_count(), 7862, 'should return line count for acl');
+  is($p->get_line_count(), 7861, 'should return line count for acl');
 };
 
 subtest 'testing get_acl_section first section' => sub {
@@ -97,44 +98,51 @@ subtest 'testing replace_section with a new set of rules' => sub {
   
   can_ok('AccessList::Extended::Boundary1', 'replace_section');
   is_deeply(\@new_section, \@new_rules, 'section should have been replaced with new rules');
-  is($p->get_line_count(), 7830, 'should return line count for acl');
+  is($p->get_line_count(), 7829, 'should return line count for acl');
 };
 
-subtest 'testing read_acl section' => sub {
+subtest 'testing parsed_acl' => sub {
   plan tests => 2;
   
   my $p = arrange();
   
-  can_ok('AccessList::Extended::Boundary1', 'read_acl');
-  my @section = $p->get_acl_section(4);
-  my @result = $p->read_acl(@section);
-  is(scalar @result, 594, 'should return an array of hashes from section 4');
+  can_ok('AccessList::Extended::Boundary1', 'parsed_acl');
+  my @result = $p->parsed_acl();
+  is(scalar @result, 7861, 'should return the entire ACL parsed');
+};
+
+subtest 'testing parsed_acl_section' => sub {
+  plan tests => 2;
+  
+  my $p = arrange();
+  
+  can_ok('AccessList::Extended::Boundary1', 'parsed_acl_section');
+  my @result = $p->parsed_acl_section(4);
+  is(scalar @result, 594, 'should return just section 4 parsed');
 };
 
 
-# subtest 'testing b1 acl section 3' => sub {
-#   plan tests => 2;
+subtest 'testing b1 acl section 3' => sub {
+  plan tests => 2;
+
+  my $p = arrange();
+    can_ok('AccessList::Extended::Boundary1', 'check_rules_overlap');
+
+  my $result = $p->check_rules_overlap($p->parsed_acl_section(3));
+
+  is(scalar keys %$result, 29, 'shoquld return overlaps from section 3 of B1 access list');
+};
+
+subtest 'testing check_all_sections_for_overlap' => sub {
+  plan tests => 2;
   
-#   my $p = arrange();
-#     can_ok('AccessList::Extended::Boundary1', 'check_rules_overlap');
-#   my @section = $p->get_acl_section(3);
-#   my @sent = $p->read_acl(@section);
-
-#   my $result = $p->check_rules_overlap(@sent);
-
-#   is(scalar keys %$result, 29, 'shoquld return overlaps from section 3 of B1 access list');
-# };
-
-# subtest 'testing check_all_sections_for_overlap' => sub {
-#   plan tests => 2;
+  my $p = arrange();
   
-#   my $p = arrange();
-  
-#   can_ok('AccessList::Extended::Boundary1', 'check_all_sections_for_overlap');
-#   my $result = $p->check_all_sections_for_overlap();
+  can_ok('AccessList::Extended::Boundary1', 'check_all_sections_for_overlap');
+  my $result = $p->check_all_sections_for_overlap();
 
-#   is(scalar keys %$result, 29, 'shoquld return overlaps from all sections of B1 access list');
-# };
+  is(scalar keys %$result, 273, 'shoquld return overlaps from all sections of B1 access list');
+};
 
 
 

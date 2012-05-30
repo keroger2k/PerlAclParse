@@ -1,7 +1,7 @@
 use strict;
 use warnings;
 use AccessList::Extended;
-use Test::More tests => 8;
+use Test::More tests => 9;
 
 BEGIN { use_ok('AccessList::Extended'); }
 BEGIN { use_ok('ConfigParse::ParseIOS'); }
@@ -142,5 +142,42 @@ subtest 'check overlap 4' => sub {
             ['permit ip any host 10.0.1.3']  );
  
  is_deeply(\%$result, \%expected, 'testing check_rules_overlap where destination addresses overlap with host entry');
+};
+
+#
+# normalize_parsed_acl 1
+#
+
+subtest 'check overlap 4' => sub {
+ plan tests => 2;
+ my $p = AccessList::Extended->new;
+ can_ok('AccessList::Extended', 'normalize_parsed_array');
+
+ my @sent = (
+    {
+      'acl_action'   => 'permit',
+      'acl_protocol' => 'ip',
+      'acl_dst_ip'   => '10.0.1.3',
+      'acl_src_ip'   => 'any',
+    }
+  );
+
+ my @result = $p->normalize_parsed_array(@sent);
+ 
+ my @expected = (
+    {
+      'acl_action'   => 'permit',
+      'acl_protocol' => 'ip',
+      'acl_dst_ip'   => '10.0.1.3',
+      'acl_src_ip'   => 'any',
+      'acl_dst_network' => '167772419',
+      'acl_dst_broadcast' => '167772419',
+      'acl_src_network' => '0',
+      'acl_src_broadcast' => '4294967295',
+      'is_host_entry' => '1'
+    }
+  );
+
+ is_deeply(\@result, \@expected, 'normalize_parsed_acl 1');
 };
 

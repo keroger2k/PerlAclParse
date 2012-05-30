@@ -8,6 +8,54 @@ use AccessList::Parser;
 use base qw(AccessList::Generic);
 
 my $iphelper = IPAddressv4::IPHelp->new;
+my $parser  = AccessList::Parser->new();
+
+sub normalize_parsed_array {
+   my ($self, @addresses) = @_;
+
+   foreach my $line (@addresses) {
+
+      if(defined($line->{'acl_remark'}))  {
+         next;
+      }
+
+      my @tmp_dst = ();
+      my @tmp_src = ();
+      $line->{'is_host_entry'} = 0;
+
+
+      if($line->{'acl_dst_ip'} eq 'any') {
+         @tmp_dst = ('0.0.0.0', '255.255.255.255');
+      } else {
+         @tmp_dst = split / /, $line->{'acl_dst_ip'};
+         #check if this is just a host address
+         if(scalar @tmp_dst != 2) {
+            $tmp_dst[1] = '0.0.0.0';
+            $line->{'is_host_entry'} = 1;
+         }
+      }
+
+      if($line->{'acl_src_ip'} eq 'any') {
+         @tmp_src = ('0.0.0.0', '255.255.255.255');
+      } else {
+         @tmp_src = split / /, $line->{'acl_src_ip'};
+         #check if this is just a host address
+         if(scalar @tmp_src != 2) {
+            $tmp_src[1] = '0.0.0.0';
+            $line->{'is_host_entry'} = 1;
+         }
+      }
+
+      $tmp_dst[1] = $iphelper->inverse_to_subnetmask($tmp_dst[1]);
+      $tmp_src[1] = $iphelper->inverse_to_subnetmask($tmp_src[1]);
+
+      $line->{'acl_dst_network'} = $iphelper->get_int_ip_network_from_string($tmp_dst[0], $tmp_dst[1]);
+      $line->{'acl_dst_broadcast'} = $iphelper->get_broadcast_int_address_from_string($tmp_dst[0], $tmp_dst[1]);
+      $line->{'acl_src_network'} = $iphelper->get_int_ip_network_from_string($tmp_src[0], $tmp_src[1]);
+      $line->{'acl_src_broadcast'} = $iphelper->get_broadcast_int_address_from_string($tmp_src[0], $tmp_src[1]);
+   }
+   return @addresses;
+}
 
 ###########################################################################################
 # Description: Given an array of acl rules checks for overlaps
@@ -32,7 +80,9 @@ sub check_rules_overlap {
 	my ($self, @addresses) = @_;
 	my $overlaps = {};
 
-	foreach my $line (@addresses) {
+   my @normalized_addresses = $self->normalize_parsed_array(@addresses);
+
+	foreach my $line (@normalized_addresses) {
   	   my @empty = ();
   	   my $found_self = 0;
 
@@ -40,7 +90,7 @@ sub check_rules_overlap {
          next;
       }
 
-  	foreach my $inside_line (@addresses){
+  	foreach my $inside_line (@normalized_addresses){
 
       #no need to parse remarks
       if(defined($inside_line->{'acl_remark'}))  {
@@ -53,56 +103,21 @@ sub check_rules_overlap {
 
    			#since this looping same data twice, need to count out own entry
  	   		if(!$found_self && $line->{'acl_src_ip'} eq $inside_line->{'acl_src_ip'} && 
- 	   		 	$line->{'acl_dst_ip'} eq $inside_line->{'acl_dst_ip'}) {
-   	       $found_self = 1;
-   	       next;
+ 	   		  $line->{'acl_dst_ip'} eq $inside_line->{'acl_dst_ip'}) {
+   	        $found_self = 1;
+   	        next;
    	   	}
 
    	   	if($line->{'acl_src_ip'} eq $inside_line->{'acl_src_ip'}) {
-
    	   		#check for destination overlap
-
-   	   		my @tmp = ();
-   	   		my @inside_tmp = ();
-   	   		my $inside_host_entry = 0;
-
-   	   		if($line->{'acl_dst_ip'} eq 'any') {
-   	   			@tmp = ('0.0.0.0', '255.255.255.255');
-   	   		} else {
-   	   			@tmp = split / /, $line->{'acl_dst_ip'};
-   	   			#check if this is just a host address
-   	   			if(scalar @tmp != 2) {
-   	   				$tmp[1] = '0.0.0.0';
-   	   				$inside_host_entry = 1;
-   	   			}
-					}
-
-   	   		if($inside_line->{'acl_dst_ip'} eq 'any') {
-   	   			@inside_tmp = ('0.0.0.0', '255.255.255.255');
-   	   		} else {
-   	   		  @inside_tmp = split / /, $inside_line->{'acl_dst_ip'};
-   	   		  #check if this is just a host address
-   	   			if(scalar @inside_tmp != 2) {
-   	   				$inside_tmp[1] = '0.0.0.0';
-   	   				$inside_host_entry = 1;
-   	   			}
-   	   		}
-
-   	   		$tmp[1] = $iphelper->inverse_to_subnetmask($tmp[1]);
-   	   		$inside_tmp[1] = $iphelper->inverse_to_subnetmask($inside_tmp[1]);
-   	   		
-   	   		my $line_network = $iphelper->get_int_ip_network_from_string($tmp[0], $tmp[1]);
-					my $line_broadcast = $iphelper->get_broadcast_int_address_from_string($tmp[0], $tmp[1]);
-               my $inside_line_network = $iphelper->get_int_ip_network_from_string($inside_tmp[0], $inside_tmp[1]);
-               my $inside_line_broadcast = $iphelper->get_broadcast_int_address_from_string($inside_tmp[0], $inside_tmp[1]);
-
-   		      if($line_network <= $inside_line_network && $line_broadcast >= $inside_line_broadcast) {
+   		      if($line->{'acl_dst_network'} <= $inside_line->{'acl_dst_network'} && 
+                  $line->{'acl_dst_broadcast'} >= $inside_line->{'acl_dst_broadcast'}) {
    		      	my $val = 
    		      		$inside_line->{'acl_action'} . " " . 
    		      		$inside_line->{'acl_protocol'} . " " . 
    						$inside_line->{'acl_src_ip'} . " " . 
    						((defined($inside_line->{'acl_src_port'})) ? $inside_line->{'acl_src_port'} . " " : "") . 
-   						(($inside_host_entry) ? "host " : "") . 
+   						(($inside_line->{'is_host_entry'}) ? "host " : "") . 
    						$inside_line->{'acl_dst_ip'} . 
    						((defined($inside_line->{'acl_dst_port'})) ? " " . $inside_line->{'acl_dst_port'} : "");
    					push @empty, $val;
@@ -110,47 +125,12 @@ sub check_rules_overlap {
    	   	}
 
    	   	if($line->{'acl_dst_ip'} eq $inside_line->{'acl_dst_ip'}) {
-
    	   		#check for source overlap
-   	   		my @tmp = ();
-   	   		my @inside_tmp = ();
-   	   		my $inside_host_entry = 0;
-
-   	   		if($line->{'acl_src_ip'} eq 'any') {
-   	   			@tmp = ('0.0.0.0', '0.0.0.0');
-   	   		} else {
-   	   			@tmp = split / /, $line->{'acl_src_ip'};
-   	   			#check if this is just a host address
-   	   			if(scalar @tmp != 2) {
-   	   				$tmp[1] = '0.0.0.0';
-   	   				$inside_host_entry = 1;
-   	   			}
-					}
-
-   	   		if($inside_line->{'acl_src_ip'} eq 'any') {
-   	   			@inside_tmp = ('0.0.0.0', '0.0.0.0');
-   	   		} else {
-   	   		  @inside_tmp = split / /, $inside_line->{'acl_src_ip'};
-   	   		  #check if this is just a host address
-   	   			if(scalar @inside_tmp != 2) {
-   	   				$inside_tmp[1] = '0.0.0.0';
-   	   				$inside_host_entry = 1;
-   	   			}
-   	   		}
-
-   	   		$tmp[1] = $iphelper->inverse_to_subnetmask($tmp[1]);
-   	   		$inside_tmp[1] = $iphelper->inverse_to_subnetmask($inside_tmp[1]);
-
-
-   	   		my $line_network = $iphelper->get_int_ip_network_from_string($tmp[0], $tmp[1]);
-					my $line_broadcast = $iphelper->get_broadcast_int_address_from_string($tmp[0], $tmp[1]);
-   		      my $inside_line_network = $iphelper->get_int_ip_network_from_string($inside_tmp[0], $inside_tmp[1]);
-   		      my $inside_line_broadcast = $iphelper->get_broadcast_int_address_from_string($inside_tmp[0], $inside_tmp[1]);
-
-   		      if($line_network <= $inside_line_network && $line_broadcast >= $inside_line_broadcast) {
+   		      if($line->{'acl_src_network'} <= $inside_line->{'acl_src_network'} && 
+                  $line->{'acl_src_broadcast'} >= $inside_line->{'acl_src_broadcast'}) {
    					my $val = $inside_line->{'acl_action'} . " " . 
    						$inside_line->{'acl_protocol'} . " " . 
-   						(($inside_host_entry) ? "host " : "") .
+   						(($inside_line->{'is_host_entry'}) ? "host " : "") .
    						$inside_line->{'acl_src_ip'} . " " . 
    						((defined($inside_line->{'acl_src_port'})) ? $inside_line->{'acl_src_port'} . " " : "") . 
    						$inside_line->{'acl_dst_ip'} .

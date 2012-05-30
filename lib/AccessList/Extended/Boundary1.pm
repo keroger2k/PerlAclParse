@@ -1,8 +1,13 @@
 package AccessList::Extended::Boundary1;
 use strict;
 use warnings;
+use AccessList::Generic;
+use AccessList::Parser;
 
 use base qw(AccessList::Extended);
+
+my $parser  = AccessList::Parser->new();
+
 
 ###########################################################################################
 # Description: Extract a specific section of an access list.
@@ -79,23 +84,32 @@ sub replace_section {
 # 	of hashes.
 #
 # Parameters: 
-# 	@acl -> array -> list of rules
 #
 # Returns: 
 # 	array -> array of hashes created by AccessList::Parser
 #
 ###########################################################################################
-sub read_acl {
-	my ($self, @acl) = @_;
-	my $parser = AccessList::Parser->new();
-	my @result = ();
-	my $i = 0;
+sub parsed_acl {
+	my ($self) = @_;
+	my @result = $parser->parse_array(@{$self->{rules}});
+	return @result;	
+}
 
-	foreach my $line (@acl) {
-		my $parsed_line = $parser->parse($line);
-		$parsed_line->{'line_number'} = $i++;
-		push @result, $parsed_line;
-	}
+###########################################################################################
+# Description: Given a list of rules parses the rules and creates an array
+# 	of hashes.
+#
+# Parameters: 
+# section -> int -> section to parse
+#
+# Returns: 
+# 	array -> array of hashes created by AccessList::Parser
+#
+###########################################################################################
+sub parsed_acl_section {
+	my ($self, $section) = @_;
+	my @section_results = $self->get_acl_section($section);
+	my @result = $parser->parse_array(@section_results);
 	return @result;	
 }
 
@@ -111,14 +125,7 @@ sub read_acl {
 ###########################################################################################
 sub check_all_sections_for_overlap {
 	my ($self) = @_;
-	my $parser = AccessList::Parser->new();
-	my @result = ();
-	my @tmp = @{$self->{rules}};
-	shift(@tmp);
-	foreach my $line (@tmp) {
-		my $parsed_line = $parser->parse($line);
-		push @result, $parsed_line;
-	}
+	my @result = $self->parsed_acl();
 	return $self->check_rules_overlap(@result);	
 }
 

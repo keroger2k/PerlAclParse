@@ -89,9 +89,11 @@ sub read_acl {
 	my ($self, @acl) = @_;
 	my $parser = AccessList::Parser->new();
 	my @result = ();
+	my $i = 0;
 
 	foreach my $line (@acl) {
 		my $parsed_line = $parser->parse($line);
+		$parsed_line->{'line_number'} = $i++;
 		push @result, $parsed_line;
 	}
 	return @result;	

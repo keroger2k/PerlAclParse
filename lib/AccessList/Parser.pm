@@ -1,13 +1,15 @@
 package AccessList::Parser;
 
-use 5.008008;
 use strict;
 use warnings;
 use Carp;
 use Scalar::Util 'blessed';
 use Parse::RecDescent;
+use IPAddressv4::IPHelp;
 
 our $VERSION = '0.05';
+
+my $iphelper = IPAddressv4::IPHelp->new;
 
 sub new {
 	my ($class) = @_;
@@ -27,7 +29,8 @@ sub parse {
 	defined ($string) or confess "blank line received";
 	my $tree = $self->{PARSER}->startrule($string);
 	defined($tree) or confess "unrecognized line\n";
-	return visit($tree);
+	my $item = visit($tree);
+	return $item;
 }
 
 #

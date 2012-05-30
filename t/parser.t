@@ -12,6 +12,18 @@ my $tree;
 my $actual;
 my $expected;
 
+sub  get_rules {
+  my @file_array = ();
+  my $path = 'tmp/rules.txt';
+  open (LIST, $path) || die "$path could not be opened: $!\nPlease check the file.\n";
+  while(my $line = <LIST>){
+    $line =~ s/\r\n$//g; #strip CRLF
+    push @file_array, $line;
+  }
+  close(LIST);
+  return @file_array;
+}
+
 #
 # Access list 1
 #
@@ -207,6 +219,18 @@ $expected = {
 };
 
 is_deeply($actual, $expected , 'Access list 13');
+
+#
+# Parse Entire List
+#
+
+# my @empty = ();
+# my @tmp = get_rules();
+# foreach my $line (@tmp) {
+#  	push @empty, $parser->parse($line);
+# }
+
+# is(scalar @empty, 7861, 'should be able to read entire acl and parse each rule');
 
 
 

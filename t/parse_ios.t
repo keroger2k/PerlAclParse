@@ -48,5 +48,5 @@ subtest 'test correctly get the latest version of acl' => sub {
   my %acls = $p->parse_acls();
   my @result = $p->get_version(\%acls, 'b1acl-in-');
   my @latest_acl = @{$acls{"b1acl-in-$result[0]"}};
-  is(scalar @latest_acl, 7887, 'something')
+  is(scalar @latest_acl, 7862, 'something')
 };

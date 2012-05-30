@@ -37,5 +37,5 @@ subtest 'testing get_line_count for an non empty acl' => sub {
   my $p = AccessList::Generic->new(rules => \@latest_acl);
   isa_ok($p, 'AccessList::Generic');
   can_ok('AccessList::Generic', 'get_line_count');
-  is($p->get_line_count(), 7887, 'should return line count for acl');
+  is($p->get_line_count(), 7862, 'should return line count for acl');
 };

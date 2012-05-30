@@ -14,10 +14,10 @@ subtest 'testing get_line_count for an empty acl' => sub {
   isa_ok($p, 'AccessList::Extended');
   can_ok('AccessList::Extended', 'get_line_count');
 };
+
 #
 # Check Overlap 1
 #
-
 
 subtest 'check overlap 1' => sub {
  plan tests => 2;

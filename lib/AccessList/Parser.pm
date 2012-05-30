@@ -145,7 +145,9 @@ acl_src_port :
 acl_dst_ip :
 		address acl_dst_port
 	|	address acl_options
-	| 	IPRANGE
+	| address CONNECTION_TYPE
+	| address LAYER3_OPTIONS
+	| IPRANGE
 
 #
 # access-list destination ports
@@ -167,12 +169,14 @@ acl_icmp_type :
 #
 
 acl_options :
-		acl_logging
+	  acl_logging LAYER3_OPTIONS
+	|	acl_logging
 	|	EOL
 	|	<error>
 
 acl_logging :
-	 	"log-input"
+		 	"log-input"
+	|		"log"
 	
 #
 # IP address types
@@ -184,8 +188,9 @@ address :
 		"host" IPADDRESS
 	|	"host" NAME
 	|	IPNETWORK
-	| 	WILDCARD_NETWORK
+	| WILDCARD_NETWORK
 	|	ANY
+
 
 #
 # port types
@@ -251,9 +256,9 @@ IPRANGE :
 		/((\d{1,3})((\.)(\d{1,3})){3}) ((\d{1,3})((\.)(\d{1,3})){3})/
 
 PROTOCOL :
-		/\d+/ | "ah" | "eigrp" | "esp" | "gre" | "icmp" | "icmp6" | "igmp" 
+		/\d+/ | "ahp" | "eigrp" | "esp" | "gre" | "icmp" | "icmp6" | "igmp" 
 	| "igrp" | "ip" | "ipinip" | "ipsec" | "nos" | "ospf" | "pcp" 
-	| "pim" | "pptp" | "snp" | "tcp" | "udp"
+	| "pim" | "pptp" | "snp" | "tcp" | "udp" | "41" 
 
 GROUP_PROTOCOL :
 		"tcp-udp" | "tcp" | "udp"
@@ -264,6 +269,12 @@ ICMP_TYPE :
 	| "mobile-redirect" | "parameter-problem" | "redirect" | "router-advertisement"
 	| "router-solicitation" | "source-quench" | "time-exceeded" | "timestamp-reply"
 	| "timestamp-request" | "traceroute" | "unreachable"
+
+CONNECTION_TYPE:
+		"established"
+
+LAYER3_OPTIONS:
+		"fragments" | "packet-too-big"
 
 PORT_ID :
 		/\S+/

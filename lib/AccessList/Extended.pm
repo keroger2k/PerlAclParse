@@ -33,10 +33,19 @@ sub check_rules_overlap {
 	my $overlaps = {};
 
 	foreach my $line (@addresses) {
-  	my @empty = ();
-  	my $found_self = 0;
+  	   my @empty = ();
+  	   my $found_self = 0;
+
+      if(defined($line->{'acl_remark'}))  {
+         next;
+      }
 
   	foreach my $inside_line (@addresses){
+
+      #no need to parse remarks
+      if(defined($inside_line->{'acl_remark'}))  {
+         next;
+      }
 
 		if ( $line->{'acl_protocol'} eq $inside_line->{'acl_protocol'} &&
    			$line->{'acl_action'} eq $inside_line->{'acl_action'}) {

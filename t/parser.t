@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 9;
+use Test::More tests => 14;
 use AccessList::Parser;
 
 my $parser = AccessList::Parser->new();
@@ -132,6 +132,82 @@ $expected = {
 };
 
 is_deeply($actual, $expected , 'Access list 8');
+
+#
+# Access list 9
+#
+
+$string = q{deny   41 any any log};
+$actual = $parser->parse($string);
+$expected = {
+	'acl_action'    => 'deny',
+	'acl_protocol'  => '41',
+	'acl_src_ip'    => 'any',
+	'acl_dst_ip'    => 'any'
+};
+
+is_deeply($actual, $expected , 'Access list 9');
+
+#
+# Access list 10
+#
+
+$string = q{permit tcp any any established};
+$actual = $parser->parse($string);
+$expected = {
+	'acl_action'    => 'permit',
+	'acl_protocol'  => 'tcp',
+	'acl_src_ip'    => 'any',
+	'acl_dst_ip'    => 'any'
+};
+
+is_deeply($actual, $expected , 'Access list 10');
+
+#
+# Access list 11
+#
+
+$string = q{permit ahp host 214.4.253.1 138.162.5.0 0.0.0.31};
+$actual = $parser->parse($string);
+$expected = {
+	'acl_action'    => 'permit',
+	'acl_protocol'  => 'ahp',
+	'acl_src_ip'    => '214.4.253.1',
+	'acl_dst_ip'    => '138.162.5.0 0.0.0.31'
+};
+
+is_deeply($actual, $expected , 'Access list 11');
+
+#
+# Access list 12
+#
+
+$string = q{deny   icmp any any log fragments};
+$actual = $parser->parse($string);
+$expected = {
+	'acl_action'    => 'deny',
+	'acl_protocol'  => 'icmp',
+	'acl_src_ip'    => 'any',
+	'acl_dst_ip'    => 'any'
+};
+
+is_deeply($actual, $expected , 'Access list 12');
+
+#
+# Access list 13
+#
+
+$string = q{permit icmp any any packet-too-big};
+$actual = $parser->parse($string);
+$expected = {
+	'acl_action'    => 'permit',
+	'acl_protocol'  => 'icmp',
+	'acl_src_ip'    => 'any',
+	'acl_dst_ip'    => 'any'
+};
+
+is_deeply($actual, $expected , 'Access list 13');
+
 
 
 

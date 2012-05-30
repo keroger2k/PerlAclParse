@@ -74,6 +74,17 @@ sub replace_section {
 	@{$self->{rules}} = @new_acl;
 }
 
+###########################################################################################
+# Description: Given a list of rules parses the rules and creates an array
+# 	of hashes.
+#
+# Parameters: 
+# 	@acl -> array -> list of rules
+#
+# Returns: 
+# 	array -> array of hashes created by AccessList::Parser
+#
+###########################################################################################
 sub read_acl {
 	my ($self, @acl) = @_;
 	my $parser = AccessList::Parser->new();
@@ -84,6 +95,29 @@ sub read_acl {
 		push @result, $parsed_line;
 	}
 	return @result;	
+}
+
+###########################################################################################
+# Description: Check the entire ACL for overlap in all sections.
+#
+# Parameters: 
+# 	uses rules hash provided with constructor
+#
+# Returns: 
+# 	array -> array of hashes created by AccessList::Parser
+#
+###########################################################################################
+sub check_all_sections_for_overlap {
+	my ($self) = @_;
+	my $parser = AccessList::Parser->new();
+	my @result = ();
+	my @tmp = @{$self->{rules}};
+	shift(@tmp);
+	foreach my $line (@tmp) {
+		my $parsed_line = $parser->parse($line);
+		push @result, $parsed_line;
+	}
+	return $self->check_rules_overlap(@result);	
 }
 
 1;

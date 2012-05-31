@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::More tests => 14;
+use Test::More tests => 13;
 use Test::Harness;
 use AccessList::Parser;
 
@@ -121,28 +121,39 @@ subtest 'testing parsed_acl_section' => sub {
   is(scalar @result, 594, 'should return just section 4 parsed');
 };
 
-
-subtest 'testing b1 acl section 3' => sub {
-  plan tests => 2;
-
-  my $p = arrange();
-    can_ok('AccessList::Extended::Boundary1', 'check_rules_overlap');
-
-  my $result = $p->check_rules_overlap($p->parsed_acl_section(3));
-
-  is(scalar keys %$result, 29, 'shoquld return overlaps from section 3 of B1 access list');
-};
-
-subtest 'testing check_all_sections_for_overlap' => sub {
+subtest 'testing normalize_parsed_array' => sub {
   plan tests => 2;
   
   my $p = arrange();
   
-  can_ok('AccessList::Extended::Boundary1', 'check_all_sections_for_overlap');
-  my $result = $p->check_all_sections_for_overlap();
-
-  is(scalar keys %$result, 273, 'shoquld return overlaps from all sections of B1 access list');
+  can_ok('AccessList::Extended::Boundary1', 'normalize_parsed_array');
+  my @acl = $p->parsed_acl();
+  #my @result = $p->normalize_parsed_array(@acl);
+  is(scalar @acl, 7861, 'should return just section 4 parsed');
 };
+
+
+# subtest 'testing b1 acl section 3' => sub {
+#   plan tests => 2;
+
+#   my $p = arrange();
+#     can_ok('AccessList::Extended::Boundary1', 'check_rules_overlap');
+
+#   my $result = $p->check_rules_overlap($p->parsed_acl_section(3));
+
+#   is(scalar keys %$result, 29, 'shoquld return overlaps from section 3 of B1 access list');
+# };
+
+# subtest 'testing check_all_sections_for_overlap' => sub {
+#   plan tests => 2;
+  
+#   my $p = arrange();
+  
+#   can_ok('AccessList::Extended::Boundary1', 'check_all_sections_for_overlap');
+#   my $result = $p->check_all_sections_for_overlap();
+
+#   is(scalar keys %$result, 273, 'shoquld return overlaps from all sections of B1 access list');
+# };
 
 
 

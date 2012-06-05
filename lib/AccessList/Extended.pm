@@ -8,8 +8,17 @@ use AccessList::Parser;
 use base qw(AccessList::Generic);
 
 my $iphelper = IPAddressv4::IPHelp->new;
-my $parser  = AccessList::Parser->new();
+my $parser  = AccessList::Parser->new;
 
+###########################################################################################
+# Description: Translate IOS terminology into actual ip addresses
+#
+# Parameters:
+#   $address -> string
+#
+# Returns: 
+#   hash  -> contains, network, mask and if the entry was a host entry
+###########################################################################################
 sub normalize_ip {
   my ($self, $address) = @_;
   my $tmp = {};
@@ -32,6 +41,27 @@ sub normalize_ip {
   return $tmp;
 }
 
+###########################################################################################
+# Description: Speed seems to be an issue with this so I'm pre-converting all the 
+#              IP addresses and such into Unsigned Integers to make logic and code
+#              easier to read. 
+#
+# Parameters:
+#   array -> array of hashes that contain acl rules
+#      hash structure:
+#          'acl_action'    => '[permit], [deny]'
+#          'acl_protocol'  => '[ip], [tcp], ...'
+#          'acl_src_ip'    => '[<ip-address> <wildcard-mask>], [any], [host]'
+#          'acl_dst_ip'    => '[<ip-address> <wildcard-mask>], [any], [host]'
+#       #optional keys:
+#          'acl_src_port'    => '[port name]'
+#          'acl_dst_port'    => '[port name]'
+#          'is_host_entry'   => 'bool'
+#
+# Returns: 
+#   array -> array of hashes.  Same as input with extra params.
+#         'acl_dst_network', 'acl_dst_broadcast', 'acl_src_network', 'acl_src_broadcast'
+###########################################################################################
 sub normalize_parsed_array {
    my ($self, @addresses) = @_;
 
@@ -70,6 +100,7 @@ sub normalize_parsed_array {
 #       #optional keys:
 #          'acl_src_port'    => '[port name]'
 #          'acl_dst_port'    => '[port name]'
+#          'is_host_entry'   => 'bool'
 #
 # Returns: 
 #   hash -> key -> network that has overlaps
@@ -86,6 +117,7 @@ sub check_rules_overlap {
       my @empty = ();
       my $found_self = 0;
 
+      #no need to parse remarks
       if(defined($line->{'acl_remark'}))  {
          next;
       }

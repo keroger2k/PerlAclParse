@@ -161,7 +161,7 @@ sub check_rules_overlap {
                (($inside_line->{'is_host_entry'}) ? "host " : "") . 
                $inside_line->{'acl_dst_ip'} . 
                ((defined($inside_line->{'acl_dst_port'})) ? " " . $inside_line->{'acl_dst_port'} : "")
-               . " (S:" . $line->{'section'} . ")/(L:" . $inside_line->{'line'} . ")";
+               . " (S:" . $inside_line->{'section'} . ")/(L:" . $inside_line->{'line'} . ")";
                 push @empty, $val;
             }
          }
@@ -176,8 +176,8 @@ sub check_rules_overlap {
                 $inside_line->{'acl_src_ip'} . " " . 
                 ((defined($inside_line->{'acl_src_port'})) ? $inside_line->{'acl_src_port'} . " " : "") . 
                 $inside_line->{'acl_dst_ip'} .
-                ((defined($inside_line->{'acl_dst_port'})) ? $inside_line->{'acl_dst_port'} . " " : "")
-               . " (S:" . $line->{'section'} . ")/(L:" . $inside_line->{'line'} . ")";
+                ((defined($inside_line->{'acl_dst_port'})) ? " " . $inside_line->{'acl_dst_port'}  : "")
+               . " (S:" . $inside_line->{'section'} . ")/(L:" . $inside_line->{'line'} . ")";
                push @empty, $val;
              }
           }

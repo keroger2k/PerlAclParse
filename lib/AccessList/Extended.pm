@@ -64,12 +64,20 @@ sub normalize_ip {
 ###########################################################################################
 sub normalize_parsed_array {
    my ($self, @addresses) = @_;
+   my $current_section = 1;
+   my $current_line = 1;
 
    foreach my $line (@addresses) {
-
+      $line->{'line'} = $current_line++;
       if(defined($line->{'acl_remark'}))  {
-         next;
+        #remark Section # -- Description
+        if($line->{'acl_remark'} =~ /^section (\d+)/i){
+          $current_section = $1;
+        }
+        next;
       }
+
+      $line->{'section'} = $current_section;
 
       my $tmp_dst = $self->normalize_ip($line->{'acl_dst_ip'});
       my $tmp_src = $self->normalize_ip($line->{'acl_src_ip'});
@@ -78,6 +86,7 @@ sub normalize_parsed_array {
       
       $tmp_dst->{'mask'} = $iphelper->inverse_to_subnetmask($tmp_dst->{'mask'});
       $tmp_src->{'mask'} = $iphelper->inverse_to_subnetmask($tmp_src->{'mask'});
+
 
       $line->{'acl_dst_network'} = $iphelper->get_int_ip_network_from_string($tmp_dst->{'network'}, $tmp_dst->{'mask'});
       $line->{'acl_dst_broadcast'} = $iphelper->get_broadcast_int_address_from_string($tmp_dst->{'network'}, $tmp_dst->{'mask'});
@@ -151,8 +160,9 @@ sub check_rules_overlap {
                ((defined($inside_line->{'acl_src_port'})) ? $inside_line->{'acl_src_port'} . " " : "") . 
                (($inside_line->{'is_host_entry'}) ? "host " : "") . 
                $inside_line->{'acl_dst_ip'} . 
-               ((defined($inside_line->{'acl_dst_port'})) ? " " . $inside_line->{'acl_dst_port'} : "");
-               push @empty, $val;
+               ((defined($inside_line->{'acl_dst_port'})) ? " " . $inside_line->{'acl_dst_port'} : "")
+               . " (S:" . $line->{'section'} . ")/(L:" . $inside_line->{'line'} . ")";
+                push @empty, $val;
             }
          }
 
@@ -166,8 +176,9 @@ sub check_rules_overlap {
                 $inside_line->{'acl_src_ip'} . " " . 
                 ((defined($inside_line->{'acl_src_port'})) ? $inside_line->{'acl_src_port'} . " " : "") . 
                 $inside_line->{'acl_dst_ip'} .
-                ((defined($inside_line->{'acl_dst_port'})) ? $inside_line->{'acl_dst_port'} . " " : "");
-                push @empty, $val;
+                ((defined($inside_line->{'acl_dst_port'})) ? $inside_line->{'acl_dst_port'} . " " : "")
+               . " (S:" . $line->{'section'} . ")/(L:" . $inside_line->{'line'} . ")";
+               push @empty, $val;
              }
           }
        }
@@ -175,7 +186,7 @@ sub check_rules_overlap {
 
 		#went through the outside loop, now look if there were any overlaps
 		if(scalar @empty > 0){
-			my $key = $line->{'acl_action'} . " " . $line->{'acl_protocol'} . " " . $line->{'acl_src_ip'} . " " . $line->{'acl_dst_ip'};
+			my $key = $line->{'acl_action'} . " " . $line->{'acl_protocol'} . " " . $line->{'acl_src_ip'} . " " . $line->{'acl_dst_ip'} . " (S:" . $line->{'section'} . ")/(L:" . $line->{'line'} . ")" ;
         $overlaps->{$key} = \@empty;
      }
 
